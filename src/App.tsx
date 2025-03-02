@@ -1,5 +1,9 @@
+import { Upload, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import reactLogo from "./assets/sample-image.jpg";
+import sampleImage1 from "./assets/sample-image-1.jpg";
+import sampleImage2 from "./assets/sample-image-2.jpg";
+import sampleImage3 from "./assets/sample-image-3.jpg";
+import { Button } from "./components/ui/button";
 import {
   Select,
   SelectContent,
@@ -13,6 +17,7 @@ import { BlurConfig, useImageWorker } from "./hooks/useImageWorker";
 
 function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [windowSize, setWindowSize] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
@@ -26,6 +31,8 @@ function App() {
     easing: "easeInOut",
     blurType: "gaussian",
   });
+  const [currentImage, setCurrentImage] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const { availableEasings, processImage } = useImageWorker(blurConfig);
 
@@ -80,8 +87,15 @@ function App() {
     // Scale the context to ensure correct drawing operations
     ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 
+    // If no image is selected, fill with dark gray
+    if (!currentImage) {
+      ctx.fillStyle = "#1f2937"; // dark gray
+      ctx.fillRect(0, 0, displayWidth, displayHeight);
+      return;
+    }
+
     const img = new Image();
-    img.src = reactLogo;
+    img.src = currentImage;
     img.onload = async () => {
       // Clear the canvas before drawing
       ctx.clearRect(0, 0, displayWidth, displayHeight);
@@ -113,21 +127,144 @@ function App() {
       // Process the image with the current blur settings
       await processImage(ctx, canvas);
     };
-  }, [blurConfig, processImage, windowSize, pixelRatio]);
+  }, [blurConfig, processImage, windowSize, pixelRatio, currentImage]);
 
   // Check if blur is enabled based on blur type
   const isBlurEnabled = blurConfig.blurType !== "none";
 
+  // Handle file upload
+  const handleFileUpload = (file: File) => {
+    if (file && file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          setCurrentImage(e.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle drag events
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileUpload(e.dataTransfer.files[0]);
+    }
+  };
+
+  // Handle clear image
+  const handleClearImage = () => {
+    setCurrentImage(null);
+  };
+
+  // Handle built-in image selection
+  const handleSelectBuiltInImage = (imageSrc: string) => {
+    setCurrentImage(imageSrc);
+  };
+
   return (
     <div className="w-full h-full overflow-hidden select-none">
-      <div className="relative w-screen h-screen overflow-hidden">
+      <div
+        className="relative w-screen h-screen overflow-hidden"
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         <canvas
           ref={canvasRef}
           className="absolute top-0 left-0 w-full h-full object-cover z-10"
         />
 
+        {/* Clear button */}
+        {currentImage && (
+          <Button
+            onClick={handleClearImage}
+            className="absolute top-4 right-4 z-20 rounded-full w-10 h-10 p-0 bg-neutral-800/80 hover:bg-neutral-700/80 text-white backdrop-blur-lg"
+            aria-label="Clear image"
+          >
+            <X size={20} />
+          </Button>
+        )}
+
+        {/* Upload interface */}
+        {!currentImage && (
+          <div
+            className={`backdrop-blur-md absolute inset-0 z-20 flex flex-col items-center justify-center p-6 ${
+              isDragging ? "bg-neutral-900/60" : "bg-neutral-950/80"
+            }`}
+          >
+            <div className="text-white p-8 rounded-3xl max-w-md w-full text-center">
+              <div className="mb-6">
+                <div className="mx-auto size-15 bg-neutral-700/80 rounded-full flex items-center justify-center mb-4">
+                  <Upload size={24} className="text-white/80" />
+                </div>
+                <h2 className="text-xl font-bold mb-2">Upload an image</h2>
+                <p className="text-white/70 text-sm">
+                  Drag and drop an image here, or click to select a file
+                </p>
+              </div>
+
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full bg-white/10 hover:bg-white/20 text-white mb-6 rounded-xl"
+              >
+                Select image
+              </Button>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    handleFileUpload(e.target.files[0]);
+                  }
+                }}
+              />
+
+              <div className="text-sm text-white/70 mb-4">
+                Or try with a sample image:
+              </div>
+
+              <div className="flex grid-cols-1 gap-2">
+                <button
+                  onClick={() => handleSelectBuiltInImage(sampleImage1)}
+                  className="rounded-xl overflow-hidden flex-1"
+                >
+                  <img src={sampleImage1} alt="" />
+                </button>
+                <button
+                  onClick={() => handleSelectBuiltInImage(sampleImage2)}
+                  className="rounded-xl overflow-hidden flex-1"
+                >
+                  <img src={sampleImage2} alt="" />
+                </button>
+                <button
+                  onClick={() => handleSelectBuiltInImage(sampleImage3)}
+                  className="rounded-xl overflow-hidden flex-1"
+                >
+                  <img src={sampleImage3} alt="" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-10 max-w-[460px] w-[92%]">
-          <div className="bg-gray-800/80 text-white p-4 pt-[17px] rounded-3xl shadow-settings backdrop-blur-lg backdrop-saturate-180">
+          <div className="bg-neutral-800/80 text-white p-4 pt-[17px] rounded-3xl shadow-settings backdrop-blur-lg backdrop-saturate-180">
             <div className="flex flex-col">
               <div className="space-y-2">
                 <Tabs
@@ -144,19 +281,19 @@ function App() {
                   <TabsList className="w-full grid grid-cols-3 bg-white/6 text-white/75 rounded-xl">
                     <TabsTrigger
                       value="none"
-                      className="rounded-lg data-[state=active]:bg-white/90 data-[state=active]:text-gray-700"
+                      className="rounded-lg data-[state=active]:bg-white/90 data-[state=active]:text-neutral-700"
                     >
                       No blur
                     </TabsTrigger>
                     <TabsTrigger
                       value="linear"
-                      className="rounded-lg data-[state=active]:bg-white/90 data-[state=active]:text-gray-700"
+                      className="rounded-lg data-[state=active]:bg-white/90 data-[state=active]:text-neutral-700"
                     >
                       Linear blur
                     </TabsTrigger>
                     <TabsTrigger
                       value="gaussian"
-                      className="rounded-lg data-[state=active]:bg-white/90 data-[state=active]:text-gray-700"
+                      className="rounded-lg data-[state=active]:bg-white/90 data-[state=active]:text-neutral-700"
                     >
                       Gaussian blur
                     </TabsTrigger>
@@ -249,7 +386,7 @@ function App() {
                     <SelectTrigger className="w-[120px] bg-white/6 border-none text-white rounded-lg h-8">
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
-                    <SelectContent className="bg-gray-800/80 text-white backdrop-blur-lg rounded-xl border-none p-.5 shadow-sm">
+                    <SelectContent className="bg-neutral-800/80 text-white backdrop-blur-lg rounded-xl border-none p-.5 shadow-sm">
                       {availableEasings.map((ease) => (
                         <SelectItem
                           key={ease}
