@@ -1,50 +1,53 @@
-# React + TypeScript + Vite
+<div align="center">
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# Progressive Blur
 
-Currently, two official plugins are available:
+A powerful and interactive image blur effect generator with real-time GPU-accelerated processing.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+![Progressive Blur Demo](screenshot.png)
 
-## Expanding the ESLint configuration
+</div>
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## [Try it live →](https://blur.leodriesch.com)
 
-- Configure the top-level `parserOptions` property like this:
+## Features
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+- **GPU-Accelerated Blur**: Utilizes WebGL2 for high-performance image processing
+- **Progressive Blur Effect**: Apply a gradient blur that increases in intensity across the image
+- **Customizable Settings**:
+  - Adjust blur start and end points
+  - Control maximum blur intensity
+  - Choose between linear and Gaussian blur algorithms
+  - Select from multiple easing functions for smooth transitions
+- **Simple Interface**: Drag and drop images or use the file picker
+- **Download Results**: Save your processed images with one click
+
+## How It Works
+
+Progressive Blur applies a dynamic blur effect that gradually increases in intensity across your image. The effect is rendered in real-time using WebGL shaders, providing smooth performance even with large images and high blur values.
+
+## Technical Implementation
+
+- Built with React and TypeScript
+- Uses Web Workers for non-blocking UI performance
+- Implements custom WebGL2 shaders for efficient blur algorithms
+- Responsive design that works across devices
+
+## Development
+
+To run the project locally:
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## License
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+MIT
